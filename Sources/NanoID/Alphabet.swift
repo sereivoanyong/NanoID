@@ -1,76 +1,78 @@
-// MIT License
 //
-// Copyright (c) 2020 Tundaware LLC
+//  Alphabet.swift
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+//  Created by Sereivoan Yong on 1/12/24.
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE
 
-extension ID {
-  public struct Alphabet {
-    let characters: [Character]
+extension Alphabet {
 
-    /// Initializes an alphabet given one or more strings
-    /// - Parameter alphabet: Strings to build the alphabet from
-    public init(_ alphabet: String...) {
-      self.characters = Array(alphabet.joined())
-    }
+  public static let numerics = Self("0123456789")
+  public static let lowercaseLetters = Self("abcdefghijklmnopqrstuvwxyz")
+  public static let uppercaseLetters = Self("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+  public static let alphanumerics = Self(numerics.string, lowercaseLetters.string, uppercaseLetters.string)
+  public static let urlAllowed = Self(alphanumerics.string, "_-")
+}
 
-    /// Returns the size of the alphabet as a UInt32
-    public var uInt32Size: UInt32 {
-      return UInt32(self.characters.count)
-    }
+public struct Alphabet {
 
-    /// Returns the size of the alphabet as a Int
-    public var intSize: Int {
-      return self.characters.count
-    }
+  let string: String
 
-    /// Returns a single character from the alphabet
-    ///
-    /// - Parameter index: The position of the character to return
-    public func character(at index: Int) -> Character {
-      return self.characters[index]
-    }
+  @usableFromInline
+  let characters: [Character]
 
-    /// Returns a single character from the alphabet given a byte
-    ///
-    /// - Parameter byte: The byte used to determine the character's position
-    public func character(from byte: UInt8) -> Character {
-      return self.characters[Int(byte) % self.characters.count]
-    }
+  init(_ string: String...) {
+    let flatten = string.joined()
+    self.string = flatten
+    self.characters = [Character](flatten)
   }
 }
 
-extension ID.Alphabet {
-  public static var numeric = Self(.numeric)
-  public static var alphaLower = Self(.alphaLower)
-  public static var alphaUpper = Self(.alphaUpper)
-  public static var alphaNumeric = Self(.alphaNumeric)
-  public static var symbols = Self(.symbols)
-  public static var urlSafe = Self(.alphaNumeric, "_-")
-  public static var full = Self(.alphaNumeric, .symbols)
+extension Alphabet: RandomAccessCollection {
+
+  public typealias Element = Character
+
+  public typealias Index = [Character].Index
+
+  public typealias SubSequence = [Character].SubSequence
+
+  public typealias Indices = [Character].Indices
+
+  public typealias Iterator = [Character].Iterator
+
+  @inlinable
+  public var startIndex: Index {
+    return characters.startIndex
+  }
+
+  @inlinable
+  public var endIndex: Index {
+    return characters.endIndex
+  }
+
+  @inlinable
+  public func index(after i: Index) -> Index {
+    return characters.index(after: i)
+  }
+
+  @inlinable
+  public subscript(position: Index) -> Character {
+    return characters[position]
+  }
+
+  @inlinable
+  public subscript(bounds: Range<Index>) -> SubSequence {
+    return characters[bounds]
+  }
+
+  @inlinable
+  public func makeIterator() -> Iterator {
+    return characters.makeIterator()
+  }
 }
 
-extension String {
-  internal static var numeric = "0123456789"
-  internal static var alphaLower = "abcdefghijklmnopqrstuvwxyz"
-  internal static var alphaUpper = Self.alphaLower.uppercased()
-  internal static var alpha = [Self.alphaLower, Self.alphaUpper].joined()
-  internal static var alphaNumeric = [Self.numeric, Self.alpha].joined()
-  internal static var symbols = "!()[]<>=?-_+*#,.:;/\\"
+extension Alphabet: CustomStringConvertible {
+
+  public var description: String {
+    return string
+  }
 }

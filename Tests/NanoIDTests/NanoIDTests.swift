@@ -1,5 +1,5 @@
 //
-//  NanoID.tests.swift
+//  NanoIDTests.swift
 //  NanoIDTests
 //
 //  Created by George Cox on 9/7/19.
@@ -12,19 +12,20 @@ import XCTest
 @testable import NanoID
 
 class ID_Tests: XCTestCase {
+
   func test_ids_are_the_expected_size() {
-    XCTAssert(ID().generate().count == ID.defaultSize)
-    XCTAssert(ID().generate(size: 25).count == 25)
-    XCTAssert(ID().generate(size: 47).count == 47)
+    XCTAssert(NanoID(count: 21).generate().count == 21)
+    XCTAssert(NanoID(count: 25).generate().count == 25)
+    XCTAssert(NanoID(count: 47).generate().count == 47)
   }
 
   func test_ids_limited_to_alphabet_simple() {
-    XCTAssertEqual(ID(alphabet: ID.Alphabet("a"), size: 5).generate(), "aaaaa")
+    XCTAssertEqual(NanoID(alphabet: Alphabet("a"), count: 5).generate(), "aaaaa")
   }
 
   func test_ids_limited_to_alphabet_complex() {
-    let alphabet = ID.Alphabet("abc!6")
-    let id = ID(alphabet: alphabet, size: 50)
+    let alphabet = Alphabet("abc!6")
+    let id = NanoID(alphabet: alphabet, count: 50)
 
     (0...1000).enumerated().forEach { _ in
       XCTAssertTrue(id.generate().isLimitedTo(elements: alphabet.characters))
@@ -32,27 +33,25 @@ class ID_Tests: XCTestCase {
   }
 
   func test_ids_use_the_urlSafe_alphabet_by_default() {
-    XCTAssert(ID().generate().isLimitedTo(elements: ID.Alphabet.urlSafe.characters))
+    XCTAssert(NanoID().generate().isLimitedTo(elements: Alphabet.urlAllowed.characters))
   }
 
   func test_ids_have_flat_distribution() {
-    ([ID.Randomizers.insecure,
-      ID.Randomizers.secure,
-      ID.Randomizers.arc4RandomUniform,
-      ID.Randomizers.default] as [RandomizerProtocol]).forEach { randomizer in
-      let count = 100 * 1000
-      let size = UInt(5)
-      let alphabet = ID.Alphabet.alphaLower
-      let id = ID(alphabet: alphabet, size: size, randomizer: randomizer)
+    let generators: [RandomGenerator] = [.system(), .secure(), .arc4Uniform()]
+    for generator in generators {
+      let idCount = 100 * 1000
+      let count = 5
+      let alphabet = Alphabet.lowercaseLetters
+      let id = NanoID(alphabet: alphabet, count: count, generator: generator)
 
-      let chars = (0..<count).reduce(into: [Character: Int]()) { acc, _ in
+      let chars = (0..<idCount).reduce(into: [Character: Int]()) { acc, _ in
         id.generate().forEach { acc[$0] = (acc[$0] ?? 0) + 1 }
       }
 
-      XCTAssertEqual(chars.count, alphabet.characters.count)
+      XCTAssertEqual(chars.count, alphabet.count)
 
       let dist = chars.reduce(into: (min: Double(INT_MAX), max: Double(0))) { acc, kvp in
-        let distribution = Double(kvp.value * alphabet.characters.count) / Double(count * Int(size))
+        let distribution = Double(kvp.value * alphabet.count) / Double(idCount * count)
         if distribution > acc.max {
           acc.max = distribution
         }
@@ -61,7 +60,7 @@ class ID_Tests: XCTestCase {
         }
       }
 
-      if randomizer is ID.Randomizers.Secure {
+      if generator is SecureRandomGenerator {
         XCTAssertLessThanOrEqual(dist.max - dist.min, 0.15)
       } else {
         XCTAssertLessThanOrEqual(dist.max - dist.min, 0.05)
@@ -70,14 +69,12 @@ class ID_Tests: XCTestCase {
   }
 
   func test_ids_do_not_collide() {
-    ([ID.Randomizers.insecure,
-      ID.Randomizers.secure,
-      ID.Randomizers.arc4RandomUniform,
-      ID.Randomizers.default] as [RandomizerProtocol]).forEach { randomizer in
-      let id = ID(randomizer: randomizer)
+    let generators: [RandomGenerator] = [.system(), .secure(), .arc4Uniform()]
+    for generator in generators {
+      let id = NanoID(generator: generator)
       _ = (0..<10).reduce(into: Set<String>()) { acc, _ in
         let generated = id.generate()
-        XCTAssertFalse(acc.contains(generated), "\(randomizer) produced collisions: \(generated):\(acc)")
+        XCTAssertFalse(acc.contains(generated), "\(generator) produced collisions: \(generated):\(acc)")
         acc.insert(generated)
       }
     }
@@ -85,6 +82,7 @@ class ID_Tests: XCTestCase {
 }
 
 extension Sequence where Element == Character {
+
   func isLimitedTo(elements: [Character]) -> Bool {
     for c in self {
       if !elements.contains(c) {

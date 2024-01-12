@@ -1,31 +1,20 @@
-// swift-tools-version:5.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version:5.9
 
 import PackageDescription
 
 let package = Package(
   name: "NanoID",
   platforms: [
-    .iOS(.v10),
-    .tvOS(.v10),
-    .macOS(.v10_11),
+    .iOS(.v12),
+    .tvOS(.v12),
+    .macOS(.v10_13),
     .watchOS(.v4)
   ],
   products: [
-    .library(
-      name: "NanoID",
-      targets: ["NanoID"]),
-    .library(
-      name: "NanoIDDynamic",
-      type: .dynamic,
-      targets: ["NanoID"]),
+    .library(name: "NanoID", targets: ["NanoID"])
   ],
-  dependencies: [],
   targets: [
-    .target(
-      name: "NanoID",
-      dependencies: []),
-    .testTarget(
-      name: "NanoIDTests",
-      dependencies: ["NanoID"]),
-  ])
+    .target(name: "NanoID", dependencies: []),
+    .testTarget(name: "NanoIDTests", dependencies: ["NanoID"])
+  ]
+)
